@@ -26,6 +26,7 @@ export default function ChatComponent({ hubConnection }: ChatComponentProps) {
 
     // Écouter la liste des utilisateurs
     hubConnection.on('UsersList', (data: UserEntry[]) => {
+      console.log(data);
       setUsersList(data);
     });
 
@@ -35,8 +36,19 @@ export default function ChatComponent({ hubConnection }: ChatComponentProps) {
     });
 
     // TODO: Écouter le message pour mettre à jour la liste de channels
-
+    hubConnection.on('UpdateChannels', (channels: Channel[]) => {
+      setChannelsList(channels);
+    });
     // TODO: Écouter le message pour quitter un channel (lorsque le channel est effacé)
+    hubConnection.on('LeaveChannel', (channel: Channel) => {
+      for(let i = 0; i < channelsList.length; i++)
+      {
+        if(channelsList[i] === channel)
+        {
+          setChannelsList(channelsList.slice(0, i).concat(channelsList.slice(i + 1, channelsList.length)));
+        }
+      }
+    });
 
     return () => {
       hubConnection.off('UsersList');
@@ -72,11 +84,13 @@ export default function ChatComponent({ hubConnection }: ChatComponentProps) {
   function createChannel(e: React.FormEvent) {
     e.preventDefault();
     // TODO: Ajouter un invoke pour créer un canal
+    hubConnection!.invoke('CreateChannel', newChannelName);
     setNewChannelName('');
   }
 
   function deleteChannel(channel: Channel) {
     // TODO: Ajouter un invoke pour supprimer un canal
+    hubConnection!.invoke('DeleteChannel', channel.id);
   }
 
   function leaveChannel() {
